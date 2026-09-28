@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BJT Business Japanese Mastery</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS: parse .xlsx files in browser -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="app-container is-top-nav">
+        <!-- Top Navbar -->
+        <nav class="top-navbar">
+            <div class="logo">
+                <h2><i class="fa-solid fa-language"></i> BJT Mastery</h2>
+            </div>
+            
+            <button class="btn-hardcore" id="btnHardcoreNav">
+                <i class="fa-solid fa-fire"></i> KHÔ MÁU BJT
+            </button>
+
+            <button class="btn-starred-nav" id="btnShowStarred" title="Từ vựng đã đánh dấu sao">
+                <i class="fa-solid fa-star"></i>
+            </button>
+
+            <!-- Horizontal scrollable tabs -->
+            <div class="nav-tabs-wrapper">
+                <button class="scroll-btn scroll-left"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="nav-tabs" id="navTabs">
+                    <!-- Tabs populated via JS -->
+                </div>
+                <button class="scroll-btn scroll-right"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="nav-user">
+                <div class="voice-selector">
+                    <i class="fa-solid fa-headset"></i> Giọng đọc:
+                    <select id="voiceSelect">
+                        <option value="Microsoft Nanami">Nanami (Nữ)</option>
+                        <option value="Microsoft Keita">Keita (Nam)</option>
+                        <option value="Microsoft Ayumi">Ayumi (Nữ)</option>
+                        <option value="Microsoft Ichiro">Ichiro (Nam)</option>
+                    </select>
+                </div>
+                <button class="btn-settings" id="btnSettings" title="Cài đặt">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Learning Toolbar (Hidden in Dashboard Grid View) -->
+            <header class="topbar learning-header" id="learningHeader" style="display: none;">
+                <button class="btn-back" id="btnBack"><i class="fa-solid fa-arrow-left"></i> Quay lại</button>
+                <h1 id="currentAlbumTitle">Album Name</h1>
+                <div class="mode-toggles">
+                    <button id="btnFlashcard" class="active"><i class="fa-solid fa-layer-group"></i> Flashcards</button>
+                    <button id="btnList"><i class="fa-solid fa-list"></i> Danh sách</button>
+                </div>
+            </header>
+            
+            <div class="content-body" id="contentBody">
+                
+                <!-- Hardcore Dashboard View -->
+                <div class="hardcore-dashboard" id="hardcoreDashboard" style="display: none;">
+                    <div class="hc-header">
+                        <h2>Mục Tiêu Khô Máu BJT 🔥</h2>
+                        <button class="btn-primary" id="btnEditPlan"><i class="fa-solid fa-pen"></i> Đổi Kế Hoạch</button>
+                    </div>
+                    
+                    <div class="hc-stats-container">
+                        <div class="hc-stat-card">
+                            <div class="hc-stat-title">Từ Mới Hôm Nay</div>
+                            <div class="hc-stat-value" id="hcNewCount">--</div>
+                        </div>
+                        <div class="hc-stat-card warning">
+                            <div class="hc-stat-title">Quên Tới Nơi (Cần Ôn Lập Tức)</div>
+                            <div class="hc-stat-value" id="hcReviewCount">--</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 40px;">
+                        <button class="btn-hardcore-start" id="btnStartHardcoreSession">
+                            BẮT ĐẦU CHIẾN ĐẤU <i class="fa-solid fa-rocket"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard / Album Grid View -->
+                <div class="album-grid-view" id="albumGridView">
+                    <!-- Intro Banner -->
+                    <div class="intro-banner">
+                        <i class="fa-solid fa-circle-info banner-icon"></i>
+                        <span>Lộ trình học từ vựng BJT Business Japanese được phân bổ rõ ràng. Vui lòng bấm vào Từng Day để bắt đầu ôn tập!</span>
+                    </div>
+
+                    <div class="grid-header">
+                        <h2 id="gridCategoryTitle">Vui lòng tải dữ liệu</h2>
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm tên bài (Day)...">
+                        </div>
+                    </div>
+                    
+                    <div class="album-grid" id="albumGrid">
+                        <!-- Cards populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Learning View (Flashcard / List injected here) -->
+                <div class="learning-view" id="learningView" style="display: none;">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cài đặt</h3>
+                <button class="btn-close" id="btnCloseSettings"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Phím nổi bật: Đọc từ vựng chính (Vocab)</label>
+                    <input type="text" id="inputKeyVocab" maxlength="1" placeholder="Ví dụ: v">
+                </div>
+                <div class="form-group">
+                    <label>Phím nổi bật: Đọc câu ví dụ (Example)</label>
+                    <input type="text" id="inputKeyExample" maxlength="1" placeholder="Ví dụ: p">
+                </div>
+
+                <!-- xlsx Update Section -->
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                    <label style="font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">
+                        <i class="fa-solid fa-file-excel" style="color: #22c55e;"></i>
+                        Cập nhật Từ Vựng từ Excel
+                    </label>
+                    <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
+                        Upload file <strong>bjt_full.xlsx</strong> — app sẽ tự động đọc các sheet <code>Group 1</code> → <code>Group 5</code>, phân chia Day (30 từ/day) và áp dụng ngay.
+                    </p>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label class="btn-csv-upload" for="xlsxFileInput" title="Chọn file bjt_full.xlsx">
+                            <i class="fa-solid fa-upload"></i> Chọn file .xlsx
+                        </label>
+                        <input type="file" id="xlsxFileInput" accept=".xlsx,.xls" style="display: none;">
+                        <button class="btn-primary" id="btnResetXlsx" style="font-size: 0.85rem; padding: 8px 14px; background: var(--danger); color: white;" title="Xóa dữ liệu đã upload, dùng lại data.js gốc">
+                            <i class="fa-solid fa-rotate-left"></i> Đặt lại gốc
+                        </button>
+                    </div>
+                    <div id="xlsxStatusText" style="margin-top: 10px; font-size: 0.82rem; color: var(--text-secondary);"></div>
+                    <!-- Progress bar for parsing -->
+                    <div id="xlsxProgressWrap" style="display:none; margin-top: 12px;">
+                        <div style="height: 6px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: hidden;">
+                            <div id="xlsxProgressBar" style="height:100%; width:0%; background: var(--primary); transition: width 0.3s;"></div>
+                        </div>
+                        <div id="xlsxProgressLabel" style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 5px;">Xử lý...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-save" id="btnSaveSettings">Lưu cài đặt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardcore Wizard Modal -->
+    <div class="modal-overlay" id="wizardModal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h3>Kế Hoạch Khô Máu BJT 🎯</h3>
+                <button class="btn-close" id="btnCloseWizard"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <p style="color: var(--text-secondary); margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem;">
+                    Thiết lập mục tiêu cá nhân: Chọn các bộ từ vựng trọng điểm và thời gian hoàn thành. Hệ thống sẽ tự động điều phối lộ trình <strong>Ôn Tập (SRS)</strong> và <strong>Học Mới</strong> mỗi ngày.
+                </p>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-signature"></i> Tên Lộ Trình:</label>
+                    <input type="text" id="inputPlanName" placeholder="Lộ trình BJT cấp tốc 30 ngày..." style="text-transform: none;">
+                </div>
+                <div class="form-row" style="display: flex; gap: 15px; margin-top: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label><i class="fa-solid fa-calendar-clock"></i> Số ngày hoàn thành:</label>
+                        <input type="number" id="inputTargetDays" min="1" max="365" value="30" style="text-transform: none;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 25px;">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fa-solid fa-list-check"></i> Chọn Nội Dung Học:</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; color: var(--primary); cursor: pointer;" onclick="document.querySelectorAll('#wizardCategories input').forEach(i=>i.checked=true)">Chọn tất cả</span>
+                    </label>
+                    <div class="category-checkboxes" id="wizardCategories" style="max-height: 300px;">
+                        <!-- Checkboxes populated via JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                <button class="btn-save" id="btnGeneratePlan" style="width: 100%; padding: 15px; font-size: 1.1rem; justify-content: center; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-bolt"></i> BẮT ĐẦU CHIẾN DỊCH
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardcore Resume Modal -->
+    <div class="modal-overlay" id="resumeHcModal">
+        <div class="modal-content" style="width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-play-circle" style="color: var(--primary)"></i> Tiếp tục phiên học?</h3>
+                <button class="btn-close" id="btnCloseResumeHcModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Tìm thấy phiên học "<strong><span id="resumePlanName"></span></strong>" đang dang dở.</p>
+                <p style="color: var(--text-secondary); margin-top: 10px;">Bạn muốn tiếp tục từ vị trí đã lưu hay bắt đầu một phiên học mới?</p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 15px; justify-content: flex-end;">
+                <button class="btn-secondary" id="btnHcStartNew">
+                    <i class="fa-solid fa-rotate-right"></i> Học lại từ đầu
+                </button>
+                <button class="btn-save" id="btnHcContinue">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Học tiếp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Make sure to load BJT data -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
